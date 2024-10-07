@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import React from "react";
-import { Tabs, Redirect } from "expo-router";
+import { Tabs } from "expo-router";
 
 import { icons } from "../../constants";
 
@@ -47,13 +47,13 @@ const TabLayout = () => {
         <Tabs.Screen
           name="chat"
           options={{
-            title: "Home",
+            title: "Chat",
             headerShown: false,
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 icon={icons.chat}
                 color={color}
-                name="Home"
+                name="Chat"
                 focused={focused}
               />
             ),

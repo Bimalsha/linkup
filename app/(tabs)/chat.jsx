@@ -67,32 +67,36 @@ const Chat = () => {
 
         <View style={styles.chatArea}>
           <View style={styles.chatAreaMargings}>
-
             {/* chat view box */}
-       <Pressable></Pressable>
-            <View style={styles.chatareaview}>
-              <View style={styles.chatProview}>
-                <Image
-                  source={images.propic}
-                  resizeMode="contain"
-                  style={styles.chatPro}
-                />
-                <View style={styles.active}>
-                  <View style={styles.online}></View>
+            <Pressable
+              onPress={() => {
+                router.push("/singlechatview");
+              }}
+            >
+              <View style={styles.chatareaview}>
+                <View style={styles.chatProview}>
+                  <Image
+                    source={images.propic}
+                    resizeMode="contain"
+                    style={styles.chatPro}
+                  />
+                  <View style={styles.active}>
+                    <View style={styles.online}></View>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.detailsarea}>
-                <Text style={styles.username}>Sman Kumara</Text>
-                <Text numberOfLines={1}>
-                  this msg for you hi baib so finally we can say ai noefvfd
-                </Text>
-                <View style={styles.msgcountarea}>
-                  <View style={styles.countback}>
-                    <Text style={styles.countmsg}>2</Text>
+                <View style={styles.detailsarea}>
+                  <Text style={styles.username}>Sman Kumara</Text>
+                  <Text numberOfLines={1}>
+                    this msg for you hi baib so finally we can say ai noefvfd
+                  </Text>
+                  <View style={styles.msgcountarea}>
+                    <View style={styles.countback}>
+                      <Text style={styles.countmsg}>2</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
+            </Pressable>
 
             {/* chat view box */}
           </View>
