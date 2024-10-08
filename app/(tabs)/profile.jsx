@@ -1,5 +1,5 @@
 import {
-  Image,
+
   Pressable,
   StyleSheet,
   Text,
@@ -7,17 +7,40 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons, images } from "../../constants";
+import { router, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 const Profile = () => {
+  const [getUName, setUName] = useState();
+  const [getDate, setDate] = useState();
+  const[getMobile,setMobile]=useState();
+const[getinputFStatus,setinputFStatus]=useState(false)
+
+  useEffect(() => {
+    async function fetchProfile() {
+      let userJson = await AsyncStorage.getItem("user");
+      let user = JSON.parse(userJson);
+      setUName(user.name);
+      setDate(user.date);
+      setMobile(user.mobile);
+    }
+    fetchProfile();
+
+    async function loadAvatar(params) {
+      
+    }
+  });
   return (
+
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable
           onPress={() => {
-            router.push("/singlechatview");
+            router.push("/chat");
           }}
         >
           <Image source={icons.back} style={styles.back} />
@@ -29,10 +52,10 @@ const Profile = () => {
           style={styles.propic}
           resizeMode="contain"
         />
-        <Text style={styles.uname}>Upul Shantha</Text>
-        <Text styles={styles.date}>Joined Date:2021.04.22</Text>
+        <Text style={styles.uname}>{getUName}</Text>
+        <Text styles={styles.date}>Joined Date:{getDate}</Text>
         <View style={styles.inputrow}>
-          <TextInput value="0774227449" style={styles.inputfield} />
+          <TextInput value={getMobile} style={styles.inputfield} editable={getinputFStatus} onChangeText={(text)=>setMobile(text)}/>
           <Image
             source={icons.call}
             style={styles.call}
@@ -40,7 +63,7 @@ const Profile = () => {
           />
         </View>
         <View style={styles.inputrow}>
-          <TextInput value="Upul Shantha" style={styles.inputfield} />
+          <TextInput value={getUName} style={styles.inputfield} editable={getinputFStatus} onChangeText={(text)=>setUName(text)}/>
           <Image
             source={icons.user}
             style={styles.call}
@@ -49,7 +72,13 @@ const Profile = () => {
         </View>
 
         <View style={styles.buttonarea}>
-          <TouchableOpacity style={styles.buttonedit}>
+          <TouchableOpacity style={styles.buttonedit}
+          onPress={
+            ()=>{
+              setinputFStatus(true);
+            }
+          }
+          >
             <Text style={styles.editText}>Edit</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.buttonsave}>
@@ -113,17 +142,17 @@ const styles = StyleSheet.create({
     height: 25,
     width: 25,
   },
-  buttonarea:{
-    flexDirection:'row',
-    gap:20
+  buttonarea: {
+    flexDirection: "row",
+    gap: 20,
   },
 
   buttonedit: {
     backgroundColor: "#f0f0f0",
     borderRadius: 15,
     marginTop: 40,
-    width:100,
-    alignItems:'center'
+    width: 100,
+    alignItems: "center",
   },
   editText: {
     paddingHorizontal: 20,
@@ -131,18 +160,18 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Poppins-Medium",
   },
-  buttonsave:{
+  buttonsave: {
     backgroundColor: "#0b7553",
     borderRadius: 15,
     marginTop: 40,
-    width:100,
-    alignItems:'center'
+    width: 100,
+    alignItems: "center",
   },
   saveText: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     fontSize: 18,
     fontFamily: "Poppins-Medium",
-    color:'#fff'
+    color: "#fff",
   },
 });

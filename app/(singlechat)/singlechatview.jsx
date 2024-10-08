@@ -12,12 +12,15 @@ import { icons, images } from "../../constants";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
+import * as ImagePicker from "expo-image-picker";
 
 const SingleChatView = () => {
   const parameters = useLocalSearchParams();
 
   const [getChatText, setChatText] = new useState();
   const [getChatArray, setChatArray] = new useState([]);
+
+  const [getimage, setImage] = useState();
   useEffect(() => {
     async function fetchChatArray() {
       let userJson = await AsyncStorage.getItem("user");
@@ -61,7 +64,7 @@ const SingleChatView = () => {
         </Pressable>
         <Pressable
           style={styles.profilearea}
-          onPress={() => {
+          onPress={async() => {
             router.push("/userprofile");
           }}
         >
@@ -75,7 +78,6 @@ const SingleChatView = () => {
                     ".png"
                   }
                   style={styles.propic}
-                  
                 />
               ) : (
                 <Text style={styles.aletter}>
@@ -112,7 +114,7 @@ const SingleChatView = () => {
       <View style={styles.chatarea}>
         <FlatList
           data={getChatArray}
-          renderItem={({ item }) => 
+          renderItem={({ item }) => (
             <View
               style={
                 item.side == "right"
@@ -128,21 +130,35 @@ const SingleChatView = () => {
                 <Text style={styles.msgtext}>{item.message}</Text>
 
                 {item.side == "right" ? (
-                  <Text style={item.status==1?styles.status:styles.status}>{item.status==1?"Seen":"Dilivered"}</Text>
+                  <Text
+                    style={item.status == 1 ? styles.status : styles.status}
+                  >
+                    {item.status == 1 ? "Seen" : "Dilivered"}
+                  </Text>
                 ) : (
                   <Text></Text>
                 )}
               </View>
             </View>
-          }
+          )}
         />
       </View>
       <View style={styles.lower}>
-        <Image
-          source={icons.image}
-          resizeMode="contain"
-          style={styles.attach}
-        />
+        <Pressable
+          onPress={async () => {
+            let result = await ImagePicker.launchCameraAsync({});
+
+            if (!result.canceled) {
+              setImage(result.assets[0].uri);
+            }
+          }}
+        >
+          <Image
+            source={icons.image}
+            resizeMode="contain"
+            style={styles.attach}
+          />
+        </Pressable>
         <TextInput
           style={styles.sendtext}
           placeholder="write your message.."
@@ -166,7 +182,6 @@ const SingleChatView = () => {
               if (response.ok) {
                 let json = await response.json();
                 if (json.success) {
-   
                   setChatText("");
                 }
               }
@@ -203,11 +218,11 @@ const styles = StyleSheet.create({
   },
   backview: {
     height: 50,
-    width: 50,
     alignItems: "center",
     justifyContent: "center",
     padding: 15,
     paddingStart: 20,
+    flex:1,
   },
   backico: {
     height: 20,
@@ -215,8 +230,9 @@ const styles = StyleSheet.create({
   },
   profilearea: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: 10,
+    flex:25,
   },
   profileview: {
     height: 60,
@@ -259,9 +275,10 @@ const styles = StyleSheet.create({
   },
   callview: {
     height: 40,
-    width: 130,
     justifyContent: "center",
     alignItems: "flex-end",
+    flex:2,
+    paddingHorizontal:15,
   },
   call: {
     height: 30,

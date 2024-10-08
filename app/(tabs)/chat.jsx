@@ -38,6 +38,10 @@ const Chat = () => {
     }
 
     fetchData();
+
+    setInterval(() => {
+      fetchData();
+    }, 5000);
   }, []);
 
   return (
