@@ -1,17 +1,48 @@
 import {
-  Image,
   Pressable,
   StyleSheet,
   Text,
   View,
   TextInput,
+  FlatList,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { icons, images } from "../../constants";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 const SingleChatView = () => {
+  const parameters = useLocalSearchParams();
+
+  const [getChatText, setChatText] = new useState();
+  const [getChatArray, setChatArray] = new useState([]);
+  useEffect(() => {
+    async function fetchChatArray() {
+      let userJson = await AsyncStorage.getItem("user");
+      let user = JSON.parse(userJson);
+
+      let response = await fetch(
+        "http://192.168.8.101:8080/LinkUp/LoadChat?logged_user_id=" +
+          user.id +
+          "&other_user_id=" +
+          parameters.other_user_id
+      );
+
+      if (response.ok) {
+        let chatArray = await response.json();
+        setChatArray(chatArray);
+        // console.log(chatArray);
+      }
+    }
+
+    fetchChatArray();
+
+    setInterval(() => {
+      fetchChatArray();
+    }, 5000);
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -36,19 +67,35 @@ const SingleChatView = () => {
         >
           <View>
             <View style={styles.profileview}>
-              <Image
-                source={images.propic}
-                style={styles.propic}
-                resizeMode="contain"
-              />
+              {parameters.avatar_image_found == "true" ? (
+                <Image
+                  source={
+                    "http://192.168.8.101:8080/LinkUp/AvatarImages/" +
+                    parameters.other_user_mobile +
+                    ".png"
+                  }
+                  style={styles.propic}
+                  
+                />
+              ) : (
+                <Text style={styles.aletter}>
+                  {parameters.other_avatar_letters}
+                </Text>
+              )}
             </View>
             <View style={styles.activate}>
-              <View style={styles.online}></View>
+              <View
+                style={
+                  parameters.other_user_status == 1
+                    ? styles.online
+                    : styles.offline
+                }
+              ></View>
             </View>
           </View>
           <View>
-            <Text style={styles.uname}>Upul Shnatha</Text>
-            <Text style={styles.time}>2024.06.01</Text>
+            <Text style={styles.uname}>{parameters.other_user_name}</Text>
+            <Text style={styles.time}>{parameters.dateTime}</Text>
           </View>
         </Pressable>
         <Pressable>
@@ -63,33 +110,32 @@ const SingleChatView = () => {
         </Pressable>
       </View>
       <View style={styles.chatarea}>
-        {/* chatleft */}
-        <View style={styles.chatalignleft}>
-          <View style={styles.reciverarea}>
-            <Text style={styles.msgtext}>
-              he screenOptions prop is passed to the Stack.Navigator, and inside
-              it, you set headerShown: false to globally hide the header for all
-              screens within the stack.
-            </Text>
-          </View>
-        </View>
-        {/* chatleft */}
-        {/* chatright */}
-        <View style={styles.chatalignright}>
-          <View style={styles.senderarea}>
-            <Text style={styles.msgtext}>
-              he screenOptions prop is passed to the Stack.Navigator, and inside
-              it, you set headerShown: false to globally hide the header for all
-              screens within the stack.
-            </Text>
+        <FlatList
+          data={getChatArray}
+          renderItem={({ item }) => 
+            <View
+              style={
+                item.side == "right"
+                  ? styles.chatalignright
+                  : styles.chatalignleft
+              }
+            >
+              <View
+                style={
+                  item.side == "right" ? styles.senderarea : styles.reciverarea
+                }
+              >
+                <Text style={styles.msgtext}>{item.message}</Text>
 
-            <Text style={styles.status}>
-              Seen
-            </Text>
-          </View>
-        </View>
-        {/* chatright */}
-
+                {item.side == "right" ? (
+                  <Text style={item.status==1?styles.status:styles.status}>{item.status==1?"Seen":"Dilivered"}</Text>
+                ) : (
+                  <Text></Text>
+                )}
+              </View>
+            </View>
+          }
+        />
       </View>
       <View style={styles.lower}>
         <Image
@@ -97,8 +143,36 @@ const SingleChatView = () => {
           resizeMode="contain"
           style={styles.attach}
         />
-        <TextInput style={styles.sendtext} placeholder="write your message.." />
-        <Pressable>
+        <TextInput
+          style={styles.sendtext}
+          placeholder="write your message.."
+          value={getChatText}
+          onChangeText={(text) => setChatText(text)}
+        />
+        <Pressable
+          onPress={async () => {
+            let userJson = await AsyncStorage.getItem("user");
+            let user = JSON.parse(userJson);
+
+            if (getChatText.length != 0) {
+              let response = await fetch(
+                "http://192.168.8.101:8080/LinkUp/SendChat?logged_user_id=" +
+                  user.id +
+                  "&other_user_id=" +
+                  parameters.other_user_id +
+                  "&message=" +
+                  getChatText
+              );
+              if (response.ok) {
+                let json = await response.json();
+                if (json.success) {
+   
+                  setChatText("");
+                }
+              }
+            }
+          }}
+        >
           <Image
             source={icons.send}
             resizeMode="contain"
@@ -167,6 +241,12 @@ const styles = StyleSheet.create({
     width: 10,
     borderRadius: 5,
     backgroundColor: "#10f751",
+  },
+  offline: {
+    height: 10,
+    width: 10,
+    borderRadius: 5,
+    backgroundColor: "#f51b3a",
   },
   uname: {
     fontFamily: "Poppins-SemiBold",
@@ -243,13 +323,25 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
     fontSize: 12,
   },
-  status:{
-    paddingTop:3,
-    paddingEnd:8,
-    paddingBottom:4,
-    textAlign:'right',
-    fontFamily:'Poppins-Medium',
-    fontSize:12,
-    color:'#04ba44',
-  }
+  status: {
+    paddingTop: 3,
+    paddingEnd: 8,
+    paddingBottom: 4,
+    textAlign: "right",
+    fontFamily: "Poppins-Medium",
+    fontSize: 12,
+    color: "#04ba44",
+  },
+  status1: {
+    paddingTop: 3,
+    paddingEnd: 8,
+    paddingBottom: 4,
+    textAlign: "right",
+    fontFamily: "Poppins-Medium",
+    fontSize: 12,
+    color: "#808080",
+  },
+  aletter: {
+    fontSize: 24,
+  },
 });

@@ -1,18 +1,45 @@
 import {
-  Image,
+  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { icons, images } from "../../constants";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 const Chat = () => {
+  const [getChatArray, setChatArray] = useState([]);
+
+  useEffect(() => {
+    async function fetchData() {
+      let userJson = await AsyncStorage.getItem("user");
+      let user = JSON.parse(userJson);
+
+      let response = await fetch(
+        "http://192.168.8.101:8080/LinkUp/LoadHome?id=" + user.id
+      );
+
+      if (response.ok) {
+        let json = await response.json();
+
+        if (json.success) {
+          let chatArray = json.jsonChatArray;
+          // console.log(chatArray);
+          setChatArray(chatArray);
+        }
+      }
+    }
+
+    fetchData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.flex_1}>
       <LinearGradient
@@ -55,11 +82,7 @@ const Chat = () => {
           {/* header footer */}
           <View style={styles.headerfooter}>
             <View style={styles.usernavview}>
-              <Image
-                source={images.propic}
-                resizeMode="contain"
-                style={styles.usernavpic}
-              />
+              <Image source={images.propic} style={styles.usernavpic} />
               <Text style={styles.usernavname}>Saman Kumara</Text>
             </View>
           </View>
@@ -67,38 +90,64 @@ const Chat = () => {
 
         <View style={styles.chatArea}>
           <View style={styles.chatAreaMargings}>
-            {/* chat view box */}
-            <Pressable
-              onPress={() => {
-                router.push("/singlechatview");
-              }}
-            >
-              <View style={styles.chatareaview}>
-                <View style={styles.chatProview}>
-                  <Image
-                    source={images.propic}
-                    resizeMode="contain"
-                    style={styles.chatPro}
-                  />
-                  <View style={styles.active}>
-                    <View style={styles.online}></View>
-                  </View>
-                </View>
-                <View style={styles.detailsarea}>
-                  <Text style={styles.username}>Sman Kumara</Text>
-                  <Text numberOfLines={1}>
-                    this msg for you hi baib so finally we can say ai noefvfd
-                  </Text>
-                  <View style={styles.msgcountarea}>
-                    <View style={styles.countback}>
-                      <Text style={styles.countmsg}>2</Text>
+            <FlatList
+              data={getChatArray}
+              renderItem={({ item }) => (
+                <Pressable
+                  onPress={() => {
+                    router.push({ pathname: "/singlechatview", params: item });
+                  }}
+                >
+                  <View style={styles.chatareaview}>
+                    <View style={styles.chatProview}>
+                      {item.avatar_image_found == true ? (
+                        <Image
+                          source={
+                            "http://192.168.8.101:8080/LinkUp/AvatarImages/" +
+                            item.other_user_mobile +
+                            ".png"
+                          }
+                          style={styles.chatPro}
+                        />
+                      ) : (
+                        <Text style={styles.profileText}>
+                          {item.other_avatar_letters}
+                        </Text>
+                      )}
+
+                      <View style={styles.active}>
+                        <View
+                          style={
+                            item.other_user_status == 1
+                              ? styles.online
+                              : styles.offline
+                          }
+                        ></View>
+                      </View>
+                    </View>
+                    <View style={styles.detailsarea}>
+                      <Text style={styles.username}>
+                        {item.other_user_name}
+                      </Text>
+                      <Text numberOfLines={1}>{item.message}</Text>
+                      {item.count == 0 ? (
+                        <View style={styles.msgcountarea}>
+                          {/* <View style={styles.countback}>
+                            <Text style={styles.countmsg}>2</Text>
+                          </View> */}
+                        </View>
+                      ) : (
+                        <View style={styles.msgcountarea}>
+                          <View style={styles.countback}>
+                            <Text style={styles.countmsg}>{item.count}</Text>
+                          </View>
+                        </View>
+                      )}
                     </View>
                   </View>
-                </View>
-              </View>
-            </Pressable>
-
-            {/* chat view box */}
+                </Pressable>
+              )}
+            />
           </View>
         </View>
       </LinearGradient>
@@ -248,5 +297,16 @@ const styles = StyleSheet.create({
   countmsg: {
     fontFamily: "Poppins-SemiBold",
     color: "#ffffff",
+  },
+  profileText: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 24,
+    color: "#10f751",
+  },
+  offline: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#f51b3a",
   },
 });

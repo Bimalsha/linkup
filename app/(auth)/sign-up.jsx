@@ -1,5 +1,5 @@
 import {
-  Image,
+  Alert,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -8,40 +8,54 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { icons, images } from "../../constants";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
+import { Image } from "expo-image";
 
 const SignUp = () => {
   const [showPassword, setshowPassword] = useState(false);
+  const [getAvatar, setAvatar] = useState(icons.uprofileupdate);
+  const [getMobile, setMobile] = useState("");
+  const [getName, setName] = useState("");
+  const [getPassword, setPassword] = useState("");
   return (
     <SafeAreaView style={styles.flex_1}>
       <LinearGradient
         colors={["#012b1c", "#06734e", "#012b1c"]}
         style={styles.flex_1}
       >
+        {/* header */}
         <View style={styles.header}>
-        
-          <Image
-            source={images.logoSmall}
-            resizeMode="contain"
-            style={styles.logoSmall}
-          />
+          <Image source={images.logoSmall} style={styles.logoSmall} />
           <Text style={styles.description}>
             our chat app is the perfect way to stay connected with friends and
             familly
           </Text>
         </View>
+        {/* header */}
+
+        {/* signup area */}
         <View style={styles.footer}>
           <View style={styles.proare}>
-            <LinearGradient
-              colors={["#62e1fb", "#87e8b6"]}
-              style={styles.userProfile}
+            <Pressable
+              onPress={async () => {
+                let result = await ImagePicker.launchImageLibraryAsync({});
+
+                if (!result.canceled) {
+                  setAvatar(result.assets[0].uri);
+                }
+              }}
             >
-              <Image source={icons.uprofileupdate} style={styles.uprofileupdate}/>
-        
-            </LinearGradient>
+              <LinearGradient
+                colors={["#62e1fb", "#87e8b6"]}
+                style={styles.userProfile}
+              >
+                <Image source={getAvatar} style={styles.uprofileupdate} />
+              </LinearGradient>
+            </Pressable>
           </View>
           <Text style={styles.signintext}>Sign Up</Text>
 
@@ -51,7 +65,9 @@ const SignUp = () => {
               <TextInput
                 placeholder="077 *** ** **"
                 style={styles.mobile}
-                keyboardType="number-pad"
+                inputMode="tel"
+                onChangeText={(text) => setMobile(text)}
+                maxLength={10}
               />
             </View>
           </View>
@@ -61,7 +77,8 @@ const SignUp = () => {
               <TextInput
                 placeholder="Ebraham Linkan"
                 style={styles.mobile}
-
+                inputMode="text"
+                onChangeText={(text) => setName(text)}
               />
             </View>
           </View>
@@ -72,6 +89,8 @@ const SignUp = () => {
                 placeholder="User14#$"
                 style={styles.mobile}
                 secureTextEntry={!showPassword}
+                onChangeText={(text) => setPassword(text)}
+                maxLength={20}
               />
               <Pressable onPress={() => setshowPassword(!showPassword)}>
                 <Image
@@ -85,8 +104,38 @@ const SignUp = () => {
           <View style={styles.navigate}>
             <TouchableOpacity
               style={styles.btn}
-              onPress={() => {
-                router.push("/sign-in");
+              onPress={async () => {
+                let formData = new FormData();
+                formData.append("mobile", getMobile);
+                formData.append("name", getName);
+                formData.append("password", getPassword);
+
+                if (getAvatar != icons.uprofileupdate) {
+                  formData.append("avatarImage", {
+                    name: "avatar.png",
+                    type: "image/png",
+                    uri: getAvatar,
+                  });
+                }
+
+                let response = await fetch(
+                  "http://192.168.8.101:8080/LinkUp/SignUp",
+                  {
+                    method: "POST",
+                    body: formData,
+                  }
+                );
+                if (response.ok) {
+                  let json = await response.json();
+                  if (json.success) {
+                    Alert.alert("Success", json.message);
+                    router.push("/sign-in");
+
+                    let user = json.user;
+                  } else {
+                    Alert.alert("Error", json.message);
+                  }
+                }
               }}
             >
               <Text style={styles.btnText}>Create Account</Text>
@@ -97,7 +146,7 @@ const SignUp = () => {
             </View>
             <Pressable
               onPress={() => {
-                router.push("sign-in");
+                router.push("/sign-in");
               }}
             >
               <Text style={styles.signup}>
@@ -107,12 +156,13 @@ const SignUp = () => {
             </Pressable>
           </View>
         </View>
+        {/* signup area */}
       </LinearGradient>
     </SafeAreaView>
-  )
-}
+  );
+};
 
-export default SignUp
+export default SignUp;
 
 const styles = StyleSheet.create({
   flex_1: {
@@ -136,6 +186,7 @@ const styles = StyleSheet.create({
   logoSmall: {
     width: 100,
     height: 70,
+    resizeMode: "contain",
   },
   description: {
     color: "#fff",
@@ -235,6 +286,6 @@ const styles = StyleSheet.create({
   uprofileupdate: {
     width: 100,
     height: 100,
-    borderRadius:50
+    borderRadius: 50,
   },
-})
+});

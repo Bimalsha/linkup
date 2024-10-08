@@ -2,10 +2,10 @@
   "expo": {
     "name": "linkup",
     "slug": "linkup",
+    "scheme": "linkup",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-    "scheme": "linkup",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/logosmall.png",
@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0c885f"
-      }
+      },
+      "package": "com.example.linkup"
     },
     "web": {
       "bundler": "metro",

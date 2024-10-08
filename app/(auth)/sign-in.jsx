@@ -1,5 +1,5 @@
 import {
-  Image,
+  Alert,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -8,13 +8,39 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { icons, images } from "../../constants";
 import { router } from "expo-router";
+import { Image } from "expo-image";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignIn = () => {
   const [showPassword, setshowPassword] = useState(false);
+  const [getMobile, setMobile] = useState("");
+  const [getPassword, setPassword] = useState("");
+  const [getLetters, setLetters] = useState("");
+  const [getAvatar, setAvatar] = useState(false);
+
+  
+  useEffect(
+    ()=>{
+      async function CheckUserAsyncStorage() {
+   
+        try {
+          let userJson = await AsyncStorage.getItem("user");
+          if (userJson != null) {
+            router.replace("/chat");
+          }
+        } catch {
+          console.log();
+        }
+    }
+    CheckUserAsyncStorage();
+    }
+  );
+
+
   return (
     <SafeAreaView style={styles.flex_1}>
       <LinearGradient
@@ -22,7 +48,6 @@ const SignIn = () => {
         style={styles.flex_1}
       >
         <View style={styles.header}>
-        
           <Image
             source={images.logoSmall}
             resizeMode="contain"
@@ -39,7 +64,18 @@ const SignIn = () => {
               colors={["#62e1fb", "#87e8b6"]}
               style={styles.userProfile}
             >
-              <Text style={styles.userletter}>AB</Text>
+              {getAvatar == true ? (
+                <Image
+                  source={
+                    "http://192.168.8.101:8080/LinkUp/AvatarImages/" +
+                    getMobile +
+                    ".png"
+                  }
+                  style={styles.propic}
+                />
+              ) : (
+                <Text style={styles.userletter}>{getLetters}</Text>
+              )}
             </LinearGradient>
           </View>
           <Text style={styles.signintext}>Sign In</Text>
@@ -50,7 +86,23 @@ const SignIn = () => {
               <TextInput
                 placeholder="077 *** ** **"
                 style={styles.mobile}
-                keyboardType="number-pad"
+                inputMode="tel"
+                onChangeText={(text) => setMobile(text)}
+                onEndEditing={async () => {
+                  let response = await fetch(
+                    "http://192.168.8.101:8080/LinkUp/LoadNameOrImage?mobile=" +
+                      getMobile
+                  );
+                  if (response.ok) {
+                    let json = await response.json();
+                    setLetters(json.letters);
+                    if (json.avatar == true) {
+                      setAvatar(true);
+                    } else {
+                      setAvatar(false);
+                    }
+                  }
+                }}
               />
             </View>
           </View>
@@ -61,6 +113,7 @@ const SignIn = () => {
                 placeholder="User14#$"
                 style={styles.mobile}
                 secureTextEntry={!showPassword}
+                onChangeText={(text) => setPassword(text)}
               />
               <Pressable onPress={() => setshowPassword(!showPassword)}>
                 <Image
@@ -74,8 +127,41 @@ const SignIn = () => {
           <View style={styles.navigate}>
             <TouchableOpacity
               style={styles.btn}
-              onPress={() => {
-                router.push("/sign-in");
+              onPress={async () => {
+                let response = await fetch(
+                  "http://192.168.8.101:8080/LinkUp/SignIn",
+                  {
+                    method: "POST",
+                    body: JSON.stringify({
+                      mobile: getMobile,
+                      password: getPassword,
+                    }),
+                    headers: {
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+    
+                if (response.ok) {
+                  let json = await response.json();
+                  if (json.success) {
+                    // user regisration complete
+    
+                    let user = json.user;
+
+    
+                    try {
+                      await AsyncStorage.setItem("user", JSON.stringify(user));
+                    
+                      router.push("/chat");
+                    } catch(e) {
+                      Alert.alert("Error","Unable to Process your request");
+                    }
+                  } else {
+                    // PROBLEM OCCURED
+                    Alert.alert("Error", json.message);
+                  }
+                }
               }}
             >
               <Text style={styles.btnText}>Sign In</Text>
@@ -210,7 +296,7 @@ const styles = StyleSheet.create({
   userProfile: {
     width: 100,
     height: 100,
-    borderRadius: 75,
+    borderRadius: 50,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -223,6 +309,12 @@ const styles = StyleSheet.create({
   },
   userletter: {
     fontFamily: "Poppins-SemiBold",
-    fontSize: 32,
+    fontSize: 40,
+    color: "#012b1c",
+  },
+  propic: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
 });

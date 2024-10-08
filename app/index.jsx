@@ -4,8 +4,27 @@ import { Link, router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { images } from "../constants";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const index = () => {
+
+  useEffect(
+    ()=>{
+      async function CheckUserAsyncStorage() {
+   
+        try {
+          let userJson = await AsyncStorage.getItem("user");
+          if (userJson != null) {
+            router.replace("/chat");
+          }
+        } catch {
+          console.log();
+        }
+    }
+    CheckUserAsyncStorage();
+    }
+  );
+
   return (
     <SafeAreaView style={styles.flex_1}>
       <LinearGradient
